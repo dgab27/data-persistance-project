@@ -3,24 +3,38 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using System.IO;
 
 public class MainManager : MonoBehaviour
 {
+    public static MainManager Instance;
+    
     public Brick BrickPrefab;
     public int LineCount = 6;
     public Rigidbody Ball;
 
     public Text ScoreText;
     public GameObject GameOverText;
+    public Text SaveDataText;
     
     private bool m_Started = false;
-    private int m_Points;
+    [SerializeField] public int m_Points;
     
     private bool m_GameOver = false;
 
-    
-    // Start is called before the first frame update
-    void Start()
+
+    private void Awake()
+    {
+        if (Instance != null)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Instance = this;
+
+    }
+        void Start()
     {
         const float step = 0.6f;
         int perLine = Mathf.FloorToInt(4.0f / step);
@@ -36,6 +50,9 @@ public class MainManager : MonoBehaviour
                 brick.onDestroyed.AddListener(AddPoint);
             }
         }
+
+        SaveDataText.text = "Best score: " + DataManager.Instance.savedPlayerName + ": " + DataManager.Instance.savedBestScore;
+        ScoreText.text = "Score: " + DataManager.Instance.currentPlayerName + ": " + m_Points;
     }
 
     private void Update()
@@ -62,15 +79,38 @@ public class MainManager : MonoBehaviour
         }
     }
 
+
     void AddPoint(int point)
     {
         m_Points += point;
-        ScoreText.text = $"Score : {m_Points}";
+        //ScoreText.text = $"Score : {m_Points}";
+        ScoreText.text = "Score: " + DataManager.Instance.currentPlayerName + ": " + m_Points;
+
+        if(m_Points > DataManager.Instance.savedBestScore)
+        {
+            DataManager.Instance.savedBestScore = m_Points;
+            DataManager.Instance.savedPlayerName = DataManager.Instance.currentPlayerName;
+            SaveDataText.text = "Score: " + DataManager.Instance.currentPlayerName + ": " + m_Points;
+            DataManager.Instance.SaveFile();
+        }
     }
 
     public void GameOver()
     {
         m_GameOver = true;
         GameOverText.SetActive(true);
-    }
+            //if (m_Points >= DataManager.Instance.savedBestScore)
+            //{
+            //    DataManager.Instance.SaveScore();
+            //    DataManager.Instance.SaveName();
+            //}
+        }
+        //else
+        //{
+        //    DataManager.Instance.SaveScore(DataManager.Instance.LoadScore());
+        //}
+
+    //}
+
+
 }
